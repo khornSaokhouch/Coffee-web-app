@@ -1,121 +1,247 @@
 'use client';
 
-import React from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '../stores/authStore';
+import Link from 'next/link';
+import { User, Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { FiUser, FiMail, FiLock } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
-// --- Animation Variants (same as login) ---
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { type: 'spring', stiffness: 100 },
-  },
-};
-
-// --- Google Icon Component (same as login) ---
-const GoogleIcon = (props) => (
-    <svg viewBox="0 0 48 48" {...props}>
-    {/* SVG paths remain the same */}
-    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
-    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
-    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.657-3.27-11.28-7.781l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
-    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.02,35.622,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+// Reusable CoffeeCup icon (copied from LoginPage for consistency)
+const CoffeeCupIcon = (props) => (
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M18.5 7H4.5a2 2 0 0 0-2 2v6a4 4 0 0 0 4 4h9a4 4 0 0 0 4-4V9a2 2 0 0 0-2-2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M18.5 9.5v-3a2 2 0 0 1 2-2H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 3s.5 1.5-1 2S4.5 6.5 4.5 6.5" opacity="0.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M10 3s.5 1.5-1 2S7.5 6.5 7.5 6.5" opacity="0.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
 
-// --- Register Page Component ---
-const RegisterPagePink = () => {
+export default function RegisterPage() {
+  const router = useRouter();
+  const { register, loading } = useAuthStore();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [localError, setLocalError] = useState(null);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLocalError(null);
+
+    // Client-side validation
+    if (password.length < 6) {
+      setLocalError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setLocalError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      await register({
+        name,
+        email,
+        password,
+        password_confirmation: confirmPassword,
+      });
+      
+      toast.success('Registration successful! Please log in.');
+      router.push('/login');
+
+    } catch (err) {
+      // API errors can be displayed in the form or as a toast.
+      // Here, we'll use the in-form display for consistency.
+      setLocalError(err.message || 'Registration failed. Please try again.');
+    }
+  };
+
   return (
-    <main className="bg-gray-50 min-h-dvh w-full flex flex-col justify-center items-center lg:flex-row">
-      {/* Left Panel: Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-pink-50 p-8"> {/* Pink Theme */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-        >
-          <img src="/images/register-illustration.svg" alt="Register Illustration" className="max-w-md w-full" />
-        </motion.div>
+    // 1. Changed main container to use the new background strategy
+    <main className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Image & Overlay */}
+      <div className="absolute inset-0 -z-20">
+        <img
+          src="https://images.unsplash.com/photo-1559496417-e7f25cb247f3?q=80&w=2564&auto=format&fit=crop"
+          alt="Close up of a barista making coffee"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/70"></div>
       </div>
-
-      {/* Right Panel: Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
-        <motion.div
-          className="w-full max-w-md space-y-6"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div variants={itemVariants} className="text-center lg:text-left">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 tracking-tight">Create Your Account</h1>
-            <p className="mt-2 text-gray-600">Join us today! It only takes a minute.</p>
-          </motion.div>
-          
-          {/* Full Name Input */}
-          <motion.div variants={itemVariants}>
-            <label htmlFor="name" className="text-sm font-medium text-gray-700">Full Name</label>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FiUser className="h-5 w-5 text-gray-400" /></span>
-              <input id="name" type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="John Doe" /> {/* Pink Theme */}
+      
+      {/* 2. Swapped white card for a "glassmorphism" style card */}
+      <motion.div
+        className="relative z-10 w-full max-w-md bg-black/30 backdrop-blur-lg border border-slate-700/50 rounded-2xl shadow-2xl p-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Header - Unified with LoginPage's branding */}
+        <div className="text-center mb-8">
+          <motion.div
+            className="inline-flex items-center gap-3 mb-4 justify-center"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+              <CoffeeCupIcon className="h-6 w-6 text-white" />
             </div>
+            {/* 3. Changed text colors to be light for dark background */}
+            <span className="font-serif text-2xl font-bold text-slate-100">KopiTime</span>
           </motion.div>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2">Create an Account</h1>
+          <p className="text-slate-300">Join us and start your coffee journey</p>
+        </div>
 
-          {/* Email Input */}
-          <motion.div variants={itemVariants}>
-            <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FiMail className="h-5 w-5 text-gray-400" /></span>
-              <input id="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="you@example.com" /> {/* Pink Theme */}
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {localError && (
+            // 4. Added and styled error message for a dark theme
+            <motion.div
+              className="bg-red-900/50 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg text-sm"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              {localError}
+            </motion.div>
+          )}
+
+          {/* Name */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-slate-200 mb-2">
+              Full Name
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <User className="h-5 w-5 text-amber-400" />
+              </span>
+              {/* 5. Restyled all inputs for dark mode */}
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                required
+                disabled={loading}
+                className="w-full px-4 py-3 pl-10 bg-slate-900/50 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 placeholder:text-slate-500"
+              />
             </div>
-          </motion.div>
+          </div>
 
-          {/* Password Input */}
-          <motion.div variants={itemVariants}>
-            <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FiLock className="h-5 w-5 text-gray-400" /></span>
-              <input id="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="••••••••" /> {/* Pink Theme */}
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <Mail className="h-5 w-5 text-amber-400" />
+              </span>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                disabled={loading}
+                className="w-full px-4 py-3 pl-10 bg-slate-900/50 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 placeholder:text-slate-500"
+              />
             </div>
-          </motion.div>
+          </div>
 
-          {/* Register Button */}
-          <motion.div variants={itemVariants}>
-            <button type="submit" className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-bold text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-300 transform hover:-translate-y-1">Create Account</button> {/* Pink Theme */}
-          </motion.div>
+          {/* Password */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-slate-200 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <Lock className="h-5 w-5 text-amber-400" />
+              </span>
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={loading}
+                className="w-full px-4 py-3 pr-10 pl-10 bg-slate-900/50 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 placeholder:text-slate-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-amber-500 cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+          </div>
 
-          {/* Divider */}
-          <motion.div variants={itemVariants} className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
-            <div className="relative flex justify-center text-sm"><span className="px-2 bg-gray-50 text-gray-500">OR</span></div>
-          </motion.div>
+          {/* Confirm Password */}
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-200 mb-2">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <Lock className="h-5 w-5 text-amber-400" />
+              </span>
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={loading}
+                className="w-full px-4 py-3 pr-10 pl-10 bg-slate-900/50 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 placeholder:text-slate-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-amber-500 cursor-pointer"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+          </div>
 
-          {/* Google Register Button */}
-          <motion.div variants={itemVariants}>
-            <button type="button" className="w-full flex items-center justify-center py-2.5 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-base font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"> {/* Pink Theme */}
-              <GoogleIcon className="h-6 w-6 mr-3" /> Sign up with Google
-            </button>
-          </motion.div>
-          
-          {/* Login Link */}
-           <motion.p variants={itemVariants} className="text-center text-sm text-gray-600">
+          <motion.button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-amber-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2"
+            whileHover={{ scale: loading ? 1 : 1.02 }}
+            whileTap={{ scale: loading ? 1 : 0.98 }}
+          >
+            {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Create Account'}
+          </motion.button>
+        </form>
+
+        {/* Sign in link */}
+        <div className="mt-6 text-center">
+          {/* 6. Updated text color for the link prompt */}
+          <p className="text-slate-400">
             Already have an account?{' '}
-            <a href="#" className="font-medium text-pink-600 hover:text-pink-500 hover:underline">Log in</a> {/* Pink Theme */}
-          </motion.p>
-        </motion.div>
-      </div>
+            <Link href="/login" className="text-amber-500 hover:text-amber-400 font-medium">
+              Sign In
+            </Link>
+          </p>
+        </div>
+      </motion.div>
     </main>
   );
-};
-
-export default RegisterPagePink;
+}

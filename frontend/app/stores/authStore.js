@@ -30,30 +30,31 @@ export const useAuthStore = create(
           set({ loading: false });
         }
       },
+      
 
-      // register: async ({ name, email, password, password_confirmation }) => {
-      //   set({ loading: true, error: null });
+      register: async ({ name, email, password, password_confirmation }) => {
+        set({ loading: true, error: null });
 
-      //   try {
-      //     const res = await request("/register", "POST", {
-      //       name,
-      //       email,
-      //       password,
-      //       password_confirmation,
-      //     });
+        try {
+          const res = await request("/register", "POST", {
+            name,
+            email,
+            password,
+            password_confirmation,
+          });
 
-      //     const { user, token } = res || {};
-      //     if (!user || !token) throw new Error("Invalid registration response.");
-      //     set({ user, token });
-      //     return { user, token };
-      //   } catch (err) {
-      //     const msg = err?.response?.data?.message || err.message || "Registration failed";
-      //     set({ error: msg });
-      //     throw new Error(msg);
-      //   } finally {
-      //     set({ loading: false });
-      //   }
-      // },
+          const { user, token } = res || {};
+          if (!user || !token) throw new Error("Invalid registration response.");
+          set({ user, token });
+          return { user, token };
+        } catch (err) {
+          const msg = err?.response?.data?.message || err.message || "Registration failed";
+          set({ error: msg });
+          throw new Error(msg);
+        } finally {
+          set({ loading: false });
+        }
+      },
 
       loginWithToken: async (token) => {
         set({ loading: true, error: null });

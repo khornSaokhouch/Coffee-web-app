@@ -10,18 +10,15 @@ export const useOrderStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const orders = await request("/orders", "GET");
-
-      // Optionally, fetch order items for each order (if your backend provides that)
-      // Or fetch order items separately in another call/page
-
       set({ orders, loading: false });
     } catch (err) {
       set({
-        error: err.response?.data?.message || err.message || "Failed to fetch orders",
+        error: err?.response?.data?.message || err.message || "Failed to fetch orders",
         loading: false,
       });
     }
   },
+  
 
   createOrder: async (orderData) => {
     set({ loading: true, error: null });
@@ -30,7 +27,7 @@ export const useOrderStore = create((set, get) => ({
       await get().fetchOrders();
     } catch (err) {
       set({
-        error: err.response?.data?.message || err.message || "Failed to create order",
+        error: err?.response?.data?.message || err.message || "Failed to create order",
         loading: false,
       });
       throw err;
@@ -44,11 +41,10 @@ export const useOrderStore = create((set, get) => ({
       await get().fetchOrders();
     } catch (err) {
       set({
-        error: err.response?.data?.message || err.message || "Failed to update order",
+        error: err?.response?.data?.message || err.message || "Failed to update order",
+        loading: false,
       });
       throw err;
-    } finally {
-      set({ loading: false });
     }
   },
 
@@ -59,27 +55,25 @@ export const useOrderStore = create((set, get) => ({
       await get().fetchOrders();
     } catch (err) {
       set({
-        error: err.response?.data?.message || err.message || "Failed to delete order",
+        error: err?.response?.data?.message || err.message || "Failed to delete order",
         loading: false,
       });
-    } finally {
-      set({ loading: false });
     }
   },
 
   fetchOrderItems: async (orderId) => {
     set({ loading: true, error: null });
     try {
-      const orderItems = await request(`/orders/${orderId}/items`, "GET");
-      return orderItems;
+      // Laravel already returns items when fetching a single order
+      const order = await request(`/orders/${orderId}`, "GET");
+      set({ loading: false });
+      return order.order_items || [];
     } catch (err) {
       set({
-        error: err.response?.data?.message || err.message || "Failed to fetch order items",
+        error: err?.response?.data?.message || err.message || "Failed to fetch order items",
         loading: false,
       });
       return [];
-    } finally {
-      set({ loading: false });
     }
   },
 }));
