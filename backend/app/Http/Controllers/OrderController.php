@@ -10,10 +10,17 @@ class OrderController extends Controller
 {
     // List all orders with items
     public function index()
-    {
-        $orders = Order::with('orderItems.coffee', 'user')->get();
-        return response()->json($orders);
-    }
+{
+    $user = auth()->user(); // get authenticated user
+    $orders = Order::with('orderItems.coffee')
+                   ->where('user_id', $user->id)
+                   ->get();
+
+    return response()->json($orders);
+}
+
+    
+    
 
     // Show single order with items
     public function show($id)

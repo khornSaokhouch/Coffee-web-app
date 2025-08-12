@@ -12,6 +12,11 @@ class Order extends Model
         'status',
     ];
 
+    protected $casts = [
+        'total_price' => 'float',
+    ];
+    
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);

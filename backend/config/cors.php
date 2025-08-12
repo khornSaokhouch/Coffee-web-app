@@ -7,7 +7,7 @@ return [
     'allowed_methods' => ['*'],
 
     // Set your frontend origin explicitly, NO '*'
-    'allowed_origins' => ['http://localhost:3000'],
+    'allowed_origins' => ['http://localhost:3000', 'https://coffee-web-app-gamma.vercel.app'],
 
     'allowed_origins_patterns' => [],
 

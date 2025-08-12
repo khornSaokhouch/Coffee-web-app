@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderController;
 
 // Public route
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
 
 
 
