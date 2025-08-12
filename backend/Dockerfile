@@ -11,18 +11,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy app code
+# Copy app files and set ownership
 COPY --chown=www-data:www-data . /var/www
 
-# Install PHP dependencies
+# Install PHP dependencies for production
 RUN composer install --no-dev --optimize-autoloader
 
-# Configure Nginx
-COPY ./docker/nginx.conf /etc/nginx/sites-available/default
-
-# Permissions
+# Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-EXPOSE 80
+# Copy Nginx config (make sure this path is correct relative to Dockerfile)
+COPY ./docker/nginx.conf /etc/nginx/sites-available/default
 
+# Expose port 8080, which Sevalla expects
+EXPOSE 8080
+
+# Start Nginx and PHP-FPM
 CMD service nginx start && php-fpm
