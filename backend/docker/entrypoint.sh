@@ -1,16 +1,14 @@
-#!/bin/bash
-
-# Exit on error
+#!/bin/sh
 set -e
 
-# Run Laravel optimizations
+# Clear and cache configs, routes, views
 php artisan config:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run database migrations
+# Run migrations
 php artisan migrate --force
 
-# Start Laravel server
-php artisan serve --host=0.0.0.0 --port=8000
+# Start PHP-FPM (adjust path/version if needed)
+/usr/sbin/php-fpm7.4 -F
