@@ -9,10 +9,11 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libonig-dev \
     libxml2-dev \
-    libsqlite3-dev \   # Added for SQLite
+    libsqlite3-dev \
     zip unzip curl git \
     && docker-php-ext-install pdo pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd \
     && rm -rf /var/lib/apt/lists/*
+
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
