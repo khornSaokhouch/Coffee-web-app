@@ -3,6 +3,11 @@ FROM php:8.2-fpm
 WORKDIR /var/www
 
 # Install system dependencies
+FROM php:8.2-fpm
+
+WORKDIR /var/www
+
+# Install system dependencies and build tools
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
@@ -12,10 +17,19 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip unzip curl git \
+    libzip-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    libicu-dev \
+    g++ \
+    make \
+    autoconf \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo pdo_mysql pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd \
+        pdo pdo_mysql pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
