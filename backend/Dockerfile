@@ -6,7 +6,7 @@ WORKDIR /var/www
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Copy Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
